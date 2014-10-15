@@ -26,18 +26,19 @@ SoundFont.WebMidiLink = function() {
   }.bind(this), false);
 };
 
-SoundFont.WebMidiLink.prototype.setup = function(url) {
+SoundFont.WebMidiLink.prototype.setup = function(url, options) {
+  options = options || {};
   if (!this.ready) {
     window.addEventListener('DOMContentLoaded', function onload() {
       window.removeEventListener('DOMContentLoaded', onload, false);
-      this.load(url);
+      this.load(url, options);
     }.bind(this), false);
   } else {
-    this.load(url);
+    this.load(url, options);
   }
 };
 
-SoundFont.WebMidiLink.prototype.load = function(url) {
+SoundFont.WebMidiLink.prototype.load = function(url, options) {
   /** @type {XMLHttpRequest} */
   var xhr = new XMLHttpRequest();
 
@@ -48,7 +49,7 @@ SoundFont.WebMidiLink.prototype.load = function(url) {
     /** @type {XMLHttpRequest} */
     var xhr = ev.target;
 
-    this.onload(xhr.response);
+    this.onload(xhr.response, options);
     if (typeof this.loadCallback === 'function') {
       this.loadCallback(xhr.response);
     }
@@ -59,24 +60,28 @@ SoundFont.WebMidiLink.prototype.load = function(url) {
 
 /**
  * @param {ArrayBuffer} response
+ * @param {Object} options
  */
-SoundFont.WebMidiLink.prototype.onload = function(response) {
+SoundFont.WebMidiLink.prototype.onload = function(response, options) {
   /** @type {Uint8Array} */
   var input = new Uint8Array(response);
 
-  this.loadSoundFont(input);
+  this.loadSoundFont(input, options);
 };
 
 /**
  * @param {Uint8Array} input
+ * @param {Object} options
  */
-SoundFont.WebMidiLink.prototype.loadSoundFont = function(input) {
+SoundFont.WebMidiLink.prototype.loadSoundFont = function(input, options) {
   /** @type {SoundFont.Synthesizer} */
   var synth;
 
   if (!this.synth) {
     synth = this.synth = new SoundFont.Synthesizer(input);
-    document.body.appendChild(synth.drawSynth());
+    if (!('headless' in options)) {
+      document.body.appendChild(synth.drawSynth());
+    }
     synth.init();
     synth.start();
     window.addEventListener('message', this.messageHandler, false);
